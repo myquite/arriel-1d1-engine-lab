@@ -21,12 +21,15 @@
   <section class="lab" aria-label="Engine cutaway and controls">
     <div class="stage">
       <div class="canvas-box">
-        <canvas id="engine" role="img" aria-label="Animated half-section of the Arriel 1D1: intake, axial and centrifugal compressor, annular combustor, two-stage gas generator turbine, free turbine, exhaust, rear reduction gearbox and transmission shaft to the front."></canvas>
+        <div class="canvas-scroll">
+          <canvas id="engine" role="img" aria-label="Animated half-section of the Arriel 1D1: intake, axial and centrifugal compressor, annular combustor, two-stage gas generator turbine, free turbine, exhaust, rear reduction gearbox and transmission shaft to the front."></canvas>
+        </div>
         <span class="tag">Upper half: section · Lower half: outside view · Schematic, not to scale</span>
         <span class="tag r" id="simclock">t 00:00</span>
       </div>
       <div class="status"><span class="phase" id="phase">Governing</span><span class="msg" id="msg"></span></div>
       <div class="legend-row">
+        <p class="cap">Upper half: section · Lower half: outside view · Swipe the drawing to pan</p>
         <div class="tscale"><span>Gas temperature</span><span>−40 °C</span><span class="bar"></span><span>1,250 °C</span></div>
         <div class="toggles">
           <label><input type="checkbox" id="tFlow" checked> Airflow</label>

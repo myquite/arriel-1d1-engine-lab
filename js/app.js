@@ -732,7 +732,7 @@ function drawTs() {
   ctx.fillText('entropy, kJ/kg·K (relative)', (pl + w - pr) / 2, h - 13);
   // TOT limit
   ctx.setLineDash([3, 3]); ctx.strokeStyle = K.warn; ctx.beginPath(); ctx.moveTo(pl, ty(845)); ctx.lineTo(w - pr, ty(845)); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = K.warn; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('TOT limit 845 °C', w - pr - 2, ty(845) - 2);
+  ctx.fillStyle = K.warn; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText('TOT limit 845 °C', pl + 4, ty(845) - 2);
   const path = (pts, col, lw, dash) => {
     ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(sx(p.s), ty(p.T)) : ctx.moveTo(sx(p.s), ty(p.T)));
     ctx.setLineDash(dash || []); ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke(); ctx.setLineDash([]);
@@ -745,7 +745,8 @@ function drawTs() {
   now.forEach(p => {
     if (!p.lab) return;
     ctx.beginPath(); ctx.arc(sx(p.s), ty(p.T), 3.5, 0, Math.PI * 2); ctx.fillStyle = tcol(p.T); ctx.fill(); ctx.strokeStyle = K.ink; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = K.ink; ctx.textAlign = 'left'; ctx.fillText(p.lab, sx(p.s) + 6, ty(p.T) - 7);
+    ctx.fillStyle = K.ink; ctx.textAlign = p.lab === '5' ? 'right' : 'left';
+    ctx.fillText(p.lab, sx(p.s) + (p.lab === '5' ? -7 : 6), ty(p.T) + (p.lab === '5' ? 8 : -7));
   });
 }
 
