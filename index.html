@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arriel 1D1 Engine Lab</title>
+<meta name="description" content="Interactive cutaway and teaching simulator of the Safran (Turbomeca) Arriel 1D1 turboshaft, with limits from the EASA type certificate.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">SAFRAN (TURBOMECA) ARRIEL 1D1 · FREE-TURBINE TURBOSHAFT · AS350 B2</div>
+    <h1>Arriel 1D1 Engine Lab</h1>
+    <p class="lede">Start the engine, fly it, and break it. The cutaway follows the air from intake to exhaust while a simple physics model drives the cockpit gauges. Limits come from the EASA type-certificate data sheet. Click any numbered part to learn what it does.</p>
+  </header>
+
+  <section class="lab" aria-label="Engine cutaway and controls">
+    <div class="stage">
+      <div class="canvas-box">
+        <canvas id="engine" role="img" aria-label="Animated half-section of the Arriel 1D1: intake, axial and centrifugal compressor, annular combustor, two-stage gas generator turbine, free turbine, exhaust, rear reduction gearbox and transmission shaft to the front."></canvas>
+        <span class="tag">Upper half: section · Lower half: outside view · Schematic, not to scale</span>
+        <span class="tag r" id="simclock">t 00:00</span>
+      </div>
+      <div class="status"><span class="phase" id="phase">Governing</span><span class="msg" id="msg"></span></div>
+      <div class="legend-row">
+        <div class="tscale"><span>Gas temperature</span><span>−40 °C</span><span class="bar"></span><span>1,250 °C</span></div>
+        <div class="toggles">
+          <label><input type="checkbox" id="tFlow" checked> Airflow</label>
+          <label><input type="checkbox" id="tTint" checked> Temperature colour</label>
+          <label><input type="checkbox" id="tNums" checked> Part numbers</label>
+        </div>
+      </div>
+      <div class="parts" id="parts" aria-label="Engine parts"></div>
+    </div>
+
+    <aside class="card controls" aria-label="Engine controls">
+      <div class="ctl">
+        <h3>Starter</h3>
+        <button class="btn primary" id="btnStart">Engage starter</button>
+        <p class="sub" id="startHint"></p>
+      </div>
+      <div class="ctl">
+        <h3>Fuel flow control lever</h3>
+        <div class="seg" role="radiogroup" aria-label="Fuel flow control lever" id="lever">
+          <button type="button" role="radio" data-v="off">OFF</button>
+          <button type="button" role="radio" data-v="idle">IDLE</button>
+          <button type="button" role="radio" data-v="flight">FLIGHT</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <div class="row"><label for="coll">Collective pitch</label><output id="collOut" for="coll">45%</output></div>
+        <input type="range" id="coll" min="0" max="100" step="1" value="45">
+        <p class="sub">Rotor demands <b class="num" id="preqOut">347 kW</b> at 100% rotor speed</p>
+      </div>
+      <div class="ctl">
+        <h3>Helicopter</h3>
+        <div class="seg" role="radiogroup" aria-label="Helicopter state" id="air">
+          <button type="button" role="radio" data-v="ground">On ground</button>
+          <button type="button" role="radio" data-v="air">Airborne</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <div class="row"><label for="oat">Outside air temp.</label><output id="oatOut" for="oat">15 °C</output></div>
+        <input type="range" id="oat" min="-30" max="45" step="1" value="15">
+        <div class="row"><label for="alt">Pressure altitude</label><output id="altOut" for="alt">0 ft</output></div>
+        <input type="range" id="alt" min="0" max="20000" step="500" value="0">
+        <p class="sub" id="airOut">Air density 100% of sea-level standard</p>
+      </div>
+      <div class="ctl">
+        <h3>Faults and options</h3>
+        <div class="checks">
+          <label><input type="checkbox" id="fHot"><span>Hot start<small>Too much start fuel. Arms the next start.</small></span></label>
+          <label><input type="checkbox" id="fFoul"><span>Compressor fouling<small>Dirty blades: less power, hotter TOT.</small></span></label>
+          <label><input type="checkbox" id="fBleed"><span>P2 bleed open<small>Cabin heat air taken from the compressor.</small></span></label>
+        </div>
+        <button class="btn danger" id="btnFlameout">Flameout now</button>
+      </div>
+      <div class="ctl">
+        <h3>Simulation</h3>
+        <div class="seg" role="radiogroup" aria-label="Simulation speed" id="speed">
+          <button type="button" role="radio" data-v="0">Pause</button>
+          <button type="button" role="radio" data-v="1">1×</button>
+          <button type="button" role="radio" data-v="3">3×</button>
+        </div>
+        <button class="btn" id="btnReset">Reset to hover</button>
+      </div>
+    </aside>
+  </section>
+
+  <section class="card panel" aria-label="Instrument panel">
+    <div class="row"><h2>Instrument panel</h2><span class="sub">Green, amber and red bands use TCDS limits</span></div>
+    <div class="gauges">
+      <div class="gauge"><canvas id="gN1"></canvas></div>
+      <div class="gauge"><canvas id="gN2"></canvas></div>
+      <div class="gauge"><canvas id="gTOT"></canvas></div>
+      <div class="gauge"><canvas id="gQ"></canvas></div>
+      <div class="gauge"><canvas id="gOP"></canvas></div>
+      <div class="gauge"><canvas id="gOT"></canvas></div>
+    </div>
+    <div class="annun" id="annun"></div>
+    <div class="readouts">
+      <div class="ro"><span>Shaft power</span><b id="rP">–</b></div>
+      <div class="ro"><span>Output shaft</span><b id="rOut">–</b></div>
+      <div class="ro"><span>Gas generator</span><b id="rN1">–</b></div>
+      <div class="ro"><span>Free turbine</span><b id="rN2">–</b></div>
+      <div class="ro"><span>Fuel flow</span><b id="rWf">–</b></div>
+      <div class="ro"><span>Air mass flow</span><b id="rM">–</b></div>
+      <div class="ro"><span>Pressure ratio</span><b id="rPR">–</b></div>
+      <div class="ro"><span>Thermal efficiency</span><b id="rEta">–</b></div>
+    </div>
+  </section>
+
+  <section class="study">
+    <article class="card" id="info" aria-live="polite">
+      <div class="kicker" id="pKick">Part 1 of 11 · Module M01</div>
+      <h2 id="pTitle">Air intake</h2>
+      <div class="partbody" id="pBody"></div>
+      <div class="tournav">
+        <button class="btn" id="prev">← Previous</button>
+        <span class="sub">Follow the air</span>
+        <button class="btn" id="next">Next →</button>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>The cycle, live</h2>
+      <p class="sub">Temperature–entropy diagram of the Brayton cycle. Compress (1→2), burn at near-constant pressure (2→4), expand through both turbines (4→5). The faint loop is take-off power at sea level, ISA.</p>
+      <canvas id="ts" aria-label="Live temperature-entropy diagram"></canvas>
+      <div class="tbl-scroll">
+        <table class="st" id="stations">
+          <thead><tr><th>Stn</th><th>Location</th><th class="n">P bar</th><th class="n">T °C</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="card stack">
+      <div>
+        <h2>Where the fuel energy goes</h2>
+        <div class="ebar"><span class="e-shaft" id="eShaft"></span><span class="e-loss" id="eLoss"></span></div>
+        <div class="ekey">
+          <div><span><i class="sw e-shaft"></i>Shaft power to rotor</span><b class="num" id="eShaftV">–</b></div>
+          <div><span><i class="sw e-loss"></i>Hot exhaust and losses</span><b class="num" id="eLossV">–</b></div>
+        </div>
+        <h3 style="margin-top:14px">Turbine work split</h3>
+        <div class="ebar"><span class="e-comp" id="tComp"></span><span class="e-shaft" id="tShaft"></span></div>
+        <div class="ekey">
+          <div><span><i class="sw e-comp"></i>Spent driving the compressors</span><b class="num" id="tCompV">–</b></div>
+          <div><span><i class="sw e-shaft"></i>Sent to the rotor</span><b class="num" id="tShaftV">–</b></div>
+        </div>
+      </div>
+      <div class="divider">
+        <h2>Reduction gearbox</h2>
+        <p class="sub" id="gearSub">Free turbine 41,420 rpm → output 5,976 rpm (6.93 : 1). Drawn slowed down.</p>
+        <canvas id="gears" aria-label="Animated reduction gear train"></canvas>
+        <div class="ekey">
+          <div><span>Free turbine torque</span><b class="num" id="qIn">–</b></div>
+          <div><span>Output shaft torque</span><b class="num" id="qOut">–</b></div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="two">
+    <article class="card">
+      <h2>Lab sheet</h2>
+      <p class="sub">Each task ticks itself when the sim sees you do it.</p>
+      <ol class="exp" id="exp"></ol>
+    </article>
+    <article class="card">
+      <div class="row"><h2>Exceedance log</h2><button class="btn" id="clearLog">Clear</button></div>
+      <p class="sub">Limits passed, with the peak value reached. A real exceedance means a maintenance inspection.</p>
+      <ul id="log"><li class="empty">No exceedances yet.</li></ul>
+    </article>
+  </section>
+
+  <section class="two">
+    <article class="card">
+      <h2>Arriel 1D1 data</h2>
+      <p class="sub">From EASA TCDS E.073, Issue 05 (20 February 2025). The TCDS is the certified reference. Manufacturer brochures quote slightly different power figures.</p>
+      <table class="spec">
+        <tr><th>Type</th><td>Free-turbine turboshaft, single-engine helicopters</td></tr>
+        <tr><th>Part number</th><td>0 292 00 522 0</td></tr>
+        <tr><th>EASA certification</th><td>19 July 1988 (applied 10 May 1988)</td></tr>
+        <tr><th>Gas generator</th><td>1 axial + 1 centrifugal compressor, annular combustor, 2-stage turbine</td></tr>
+        <tr><th>Power turbine</th><td>1 stage, free; reduction gearbox at rear; accessory gearbox at front</td></tr>
+        <tr><th>Take-off power</th><td>531 kW (712 shp)*</td></tr>
+        <tr><th>Max continuous power</th><td>466 kW (625 shp)</td></tr>
+        <tr><th>Output shaft speed</th><td>5,976 rpm</td></tr>
+        <tr><th>N1 (100%)</th><td>51,800 rpm</td></tr>
+        <tr><th>N1 limits</th><td>MCP 98% · TO 101.9%* · 103.1% 20 s** · 107.5% 5 s · min 67%</td></tr>
+        <tr><th>N2 (100%)</th><td>41,420 rpm</td></tr>
+        <tr><th>N2 limits</th><td>108.5% stabilized · 120.5% / 86% for 5 s</td></tr>
+        <tr><th>TOT limits</th><td>MCP 795 °C · TO 845 °C · start 865 °C · 870 °C &lt;20 s**</td></tr>
+        <tr><th>Torque</th><td>83 m·daN max · 91.5 m·daN for 20 s</td></tr>
+        <tr><th>Oil temperature</th><td>max 115 °C · power application from −10 °C (3 cSt oil) / 0 °C (5 cSt)</td></tr>
+        <tr><th>Oil pressure</th><td>min 1,300 hPa (70–85% N1) · 1,800 hPa (N1 ≥ 85%) · max 5,000 hPa</td></tr>
+        <tr><th>P2 air bleed</th><td>max 100 g/s at take-off</td></tr>
+        <tr><th>Control system</th><td>Hydromechanical FCU: proportional N2 + proportional-integral N1 control</td></tr>
+        <tr><th>Size (L × H × W)</th><td>1.20 × 0.61 × 0.47 m</td></tr>
+        <tr><th>Dry weight</th><td>122 kg</td></tr>
+      </table>
+      <p class="sub" style="margin-top:8px">* Restricted by the installation's fuel-flow limit; N1 take-off limit follows a de-rating law with OAT and altitude. A Safran brochure quotes 546 kW (732 shp) at sea level, ISA. ** Only on helicopters with the VEMD digital display.</p>
+    </article>
+    <article class="card">
+      <h2>How the sim works</h2>
+      <p class="sub">The limits above are certified data. The engine behaviour between them is a teaching model, not a performance model. Assumptions:</p>
+      <ul class="assume">
+        <li>Shaft power rises with corrected N1 and falls with air density (δ/√θ). It reaches 531 kW at 101.9% N1 at sea level, ISA.</li>
+        <li>TOT follows corrected N1, calibrated so take-off power sits at 845 °C and max continuous near 795 °C.</li>
+        <li>Air mass flow about 2.5 kg/s and pressure ratio about 8 : 1 at take-off. Component efficiencies are 78–85%.</li>
+        <li>Rotor power demand runs from 140 kW (flat pitch) to 600 kW (full collective) at 100% rotor speed.</li>
+        <li>Generic start sequence: ignition at 10% N1, light-off at 12%, starter cut-out at 45%, idle near 68%. Follow the flight manual for real procedures.</li>
+        <li>The governor holds N2 at 100% with a proportional loop plus collective feed-forward. The fuel stop limits N1 to 104.5%.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="card">
+    <h2>References</h2>
+    <ul class="refs">
+      <li><a href="https://www.easa.europa.eu/en/downloads/16994/en" target="_blank" rel="noopener">EASA Type-Certificate Data Sheet E.073, Arriel 1 series engines, Issue 05</a> <span>— ratings, limits, dimensions, description (primary source)</span></li>
+      <li><a href="https://www.easa.europa.eu/sites/default/files/dfu/EASA-TCDS-E.073_Turbomeca_Arriel_1_series_engines-02-18092008.pdf" target="_blank" rel="noopener">EASA TCDS E.073, Issue 02 (2008)</a> <span>— earlier revision, useful for comparison</span></li>
+      <li><a href="https://pdf.aeroexpo.online/pdf/safran-helicopter-engines/arriel-1d1-1e2-sale-brochure-0/170453-274.html" target="_blank" rel="noopener">Safran Helicopter Engines, Arriel 1D1 / 1E2 brochure</a> <span>— manufacturer power figures</span></li>
+      <li><a href="https://helicoptermaintenancemagazine.com/node/405" target="_blank" rel="noopener">Helicopter Maintenance Magazine, “Turbomeca – Engine Maintenance Concept”</a> <span>— the modular (M01–M05) design</span></li>
+      <li><a href="https://en.wikipedia.org/wiki/Turbomeca_Arriel" target="_blank" rel="noopener">Wikipedia, Turbomeca Arriel</a> <span>— family history and applications</span></li>
+      <li><a href="https://www.grc.nasa.gov/www/k-12/airplane/turbshft.html" target="_blank" rel="noopener">NASA Glenn Research Center, Turboshaft Engine</a> <span>— beginner's guide to turboshaft principles</span></li>
+      <li><a href="https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/helicopter_flying_handbook" target="_blank" rel="noopener">FAA Helicopter Flying Handbook (FAA-H-8083-21)</a> <span>— powerplant, governing, autorotation</span></li>
+    </ul>
+  </section>
+
+  <footer>For learning only. This is not an approved training device and not a substitute for the Arriel 1D1 installation and maintenance manuals or the helicopter flight manual. Arriel is a trademark of Safran Helicopter Engines; this page is not affiliated with Safran.</footer>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>
