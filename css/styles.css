@@ -115,7 +115,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .gauges { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .gauge { display: grid; justify-items: center; gap: 2px; min-width: 0; }
 .gauge canvas { width: 100%; max-width: 172px; aspect-ratio: 1; display: block; }
-.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 16px; }
+.readouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 16px; }
 .ro { display: grid; gap: 0; padding: 6px 0; border-top: 1px solid var(--line); }
 .ro span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-family: var(--font-display); font-weight: 600; }
 .ro b { font-family: var(--font-mono); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; }
@@ -196,6 +196,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 80ch; }
   .ctl { border-right: 0; }
   .study { grid-template-columns: 1fr; }
   .gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .status { flex-direction: column; gap: 2px; }
 }
 @media (prefers-reduced-motion: reduce) {

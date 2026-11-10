@@ -682,9 +682,9 @@ function drawGauge(g) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = K.muted; ctx.strokeStyle = K.ink; ctx.lineWidth = 1;
   for (let v = g.min; v <= g.max + 1e-6; v += g.step) {
     const a = ang(v), c = Math.cos(a), s = Math.sin(a);
-    ctx.beginPath(); ctx.moveTo(cx + c * (R - aw - 6), cy + s * (R - aw - 6)); ctx.lineTo(cx + c * (R - aw - 12), cy + s * (R - aw - 12)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + c * (R - aw - 6), cy + s * (R - aw - 6)); ctx.lineTo(cx + c * (R - aw - 10), cy + s * (R - aw - 10)); ctx.stroke();
     const lbl = g.k ? String(v / 1000) : String(v);
-    ctx.fillText(lbl, cx + c * (R - aw - 12 - fs), cy + s * (R - aw - 12 - fs));
+    ctx.fillText(lbl, cx + c * (R - aw - 14 - fs * 1.15), cy + s * (R - aw - 14 - fs * 1.15));
   }
   g.red.forEach(v => { const a = ang(v); ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * (R - 1), cy + Math.sin(a) * (R - 1)); ctx.lineTo(cx + Math.cos(a) * (R - aw - 10), cy + Math.sin(a) * (R - aw - 10)); ctx.strokeStyle = K.warn; ctx.lineWidth = 3; ctx.stroke(); });
   g.marks.forEach(v => { const a = ang(v); ctx.beginPath(); ctx.arc(cx + Math.cos(a) * (R - aw / 2 - 4), cy + Math.sin(a) * (R - aw / 2 - 4), aw * 0.55, 0, Math.PI * 2); ctx.fillStyle = K.face; ctx.fill(); ctx.strokeStyle = K.warn; ctx.lineWidth = 1.5; ctx.stroke(); });
