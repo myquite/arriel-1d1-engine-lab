@@ -63,7 +63,7 @@ function step(dt) {
   const a = amb();
   S.t += dt;
   const fuel = S.lever !== 'off';
-  if (S.starter && S.N1 >= CUTOUT) { S.starter = false; note('Starter cut out at 45% N1'); }
+  if (S.starter && S.N1 >= CUTOUT) S.starter = false;
   if (S.comb && !fuel) {
     if (S.starting && S.lastStartHot && S.startPeak < C.TOT_START) E[4] = true;
     S.comb = false; S.starting = false;
@@ -492,7 +492,7 @@ function drawEngine(dtv) {
   ctx.globalAlpha = 1; ctx.restore();
   ctx.fillStyle = K.ink; ctx.font = `600 ${Math.max(9, 12 * sc)}px ${K.fmono}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  [['M01', 115], ['M02', 300], ['M03', 530], ['M04', 870], ['M05', 1095]].forEach(([t, x]) => ctx.fillText(t, X(x), Y(x === 1095 ? -150 : -60)));
+  [['M01', 115], ['M02', 300], ['M03', 530], ['M04', 870]].forEach(([t, x]) => ctx.fillText(t, X(x), Y(-60)));
 
   // gas path regions
   for (const k in G) fillPoly(ctx, G[k], tint ? tcol(regionT[k] - 273.15, 0.32) : K.gas);
@@ -575,6 +575,8 @@ function drawEngine(dtv) {
   gear(ctx, X(1095), Y(-104), 84 * sc, 50, -aP * 12 / 50 + Math.PI / 50, K.metal2, K.ink);
   gear(ctx, X(1095), Y(-240), 52 * sc, 31, aP * 12 / 31, K.rotor, K.ink);
   // FCU
+  ctx.fillStyle = K.ink; ctx.textAlign = 'center'; ctx.font = `600 ${Math.max(9, 12 * sc)}px ${K.fmono}`;
+  ctx.fillText('M05', X(1165), Y(-284));
   rectW(ctx, 140, 260, -226, -160, K.face, K.ink, 1.4);
   ctx.fillStyle = K.ink; ctx.font = `700 ${Math.max(10, 14 * sc)}px ${K.fdisp}`;
   ctx.textAlign = 'center'; ctx.fillText('FCU', X(190), Y(-193));
