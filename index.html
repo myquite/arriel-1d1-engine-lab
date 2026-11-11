@@ -20,6 +20,18 @@
 
   <section class="lab" aria-label="Engine cutaway and controls">
     <div class="stage">
+      <div class="card cockpit" aria-label="Instrument panel">
+        <div class="row"><h3>Instrument panel</h3><span class="sub">Green, amber and red bands use TCDS limits</span></div>
+        <div class="gauges">
+          <div class="gauge"><canvas id="gN1"></canvas></div>
+          <div class="gauge"><canvas id="gN2"></canvas></div>
+          <div class="gauge"><canvas id="gTOT"></canvas></div>
+          <div class="gauge"><canvas id="gQ"></canvas></div>
+          <div class="gauge"><canvas id="gOP"></canvas></div>
+          <div class="gauge"><canvas id="gOT"></canvas></div>
+        </div>
+        <div class="annun" id="annun"></div>
+      </div>
       <div class="canvas-box">
         <div class="canvas-scroll">
           <canvas id="engine" role="img" aria-label="Animated half-section of the Arriel 1D1: intake, axial and centrifugal compressor, annular combustor, two-stage gas generator turbine, free turbine, exhaust, rear reduction gearbox and transmission shaft to the front."></canvas>
@@ -43,7 +55,7 @@
     <aside class="card controls" aria-label="Engine controls">
       <div class="ctl">
         <h3>Starter</h3>
-        <button class="btn primary" id="btnStart">Engage starter</button>
+        <button type="button" class="btn primary starter" id="btnStart" aria-pressed="false">Hold to start</button>
         <p class="sub" id="startHint"></p>
       </div>
       <div class="ctl">
@@ -94,17 +106,8 @@
     </aside>
   </section>
 
-  <section class="card panel" aria-label="Instrument panel">
-    <div class="row"><h2>Instrument panel</h2><span class="sub">Green, amber and red bands use TCDS limits</span></div>
-    <div class="gauges">
-      <div class="gauge"><canvas id="gN1"></canvas></div>
-      <div class="gauge"><canvas id="gN2"></canvas></div>
-      <div class="gauge"><canvas id="gTOT"></canvas></div>
-      <div class="gauge"><canvas id="gQ"></canvas></div>
-      <div class="gauge"><canvas id="gOP"></canvas></div>
-      <div class="gauge"><canvas id="gOT"></canvas></div>
-    </div>
-    <div class="annun" id="annun"></div>
+  <section class="card panel" aria-label="Engine readouts">
+    <div class="row"><h2>Engine readouts</h2><span class="sub">Values from the teaching model</span></div>
     <div class="readouts">
       <div class="ro"><span>Shaft power</span><b id="rP">–</b></div>
       <div class="ro"><span>Output shaft</span><b id="rOut">–</b></div>
@@ -217,7 +220,7 @@
         <li>TOT follows corrected N1, calibrated so take-off power sits at 845 °C and max continuous near 795 °C.</li>
         <li>Air mass flow about 2.5 kg/s and pressure ratio about 8 : 1 at take-off. Component efficiencies are 78–85%.</li>
         <li>Rotor power demand runs from 140 kW (flat pitch) to 600 kW (full collective) at 100% rotor speed.</li>
-        <li>Generic start sequence: ignition at 10% N1, light-off at 12%, starter cut-out at 45%, idle near 68%. Follow the flight manual for real procedures.</li>
+        <li>Generic start sequence: the starter is a momentary switch, held through the start. Ignition at 10% N1, light-off at 12%, starter cut-out at 45%, idle near 68%. Released before about 25% N1, the start hangs. Follow the flight manual for real procedures.</li>
         <li>The governor holds N2 at 100% with a proportional loop plus collective feed-forward. The fuel stop limits N1 to 104.5%.</li>
       </ul>
     </article>

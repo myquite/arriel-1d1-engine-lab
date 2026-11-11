@@ -46,7 +46,7 @@ function t45C(N1, a) {
 
 function resetState() {
   Object.assign(S, {
-    t: 0, N1: 0, N2: 100, NR: 100, TOT: 0, oilT: 78, starter: false, ign: false, comb: true, starting: false,
+    t: 0, N1: 0, N2: 100, NR: 100, TOT: 0, oilT: 78, starter: false, startHeld: false, cutout: false, ign: false, comb: true, starting: false,
     lever: 'flight', coll: 45, airborne: true, oat: 15, alt: 0, hot: false, foul: false, bleed: false,
     speed: 1, dN1: 0, P: 0, q: 0, oilP: 0, coupled: true, startPeak: 0, lastStartHot: false, flameoutAt: null,
     sawStop: false, startFromStop: false, n1Over: 0, qOver: 0
@@ -63,7 +63,11 @@ function step(dt) {
   const a = amb();
   S.t += dt;
   const fuel = S.lever !== 'off';
-  if (S.starter && S.N1 >= CUTOUT) S.starter = false;
+  // Momentary starter: powered only while the switch is held. The cut-out relay drops it at 45% N1
+  // and stays open until the switch is released.
+  if (!S.startHeld) S.cutout = false;
+  else if (S.N1 >= CUTOUT) S.cutout = true;
+  S.starter = S.startHeld && !S.cutout;
   if (S.comb && !fuel) {
     if (S.starting && S.lastStartHot && S.startPeak < C.TOT_START) E[4] = true;
     S.comb = false; S.starting = false;
@@ -76,7 +80,9 @@ function step(dt) {
 
   let dN1;
   if (S.comb && S.starting) {
-    dN1 = (S.starter ? 2.4 : 1.9) * (S.hot && S.lastStartHot ? 0.6 : 1);
+    // Without the starter, the turbine only accelerates the gas generator on its own above ~25% N1.
+    const self = S.starter ? 2.4 : 1.9 * clamp((S.N1 - 25) / 15, -0.4, 1);
+    dN1 = self * (S.hot && S.lastStartHot ? 0.6 : 1);
     if (S.N1 >= 67.5) {
       S.starting = false;
       if (S.startFromStop && !S.lastStartHot) E[2] = true;
@@ -243,7 +249,7 @@ function note(s) { lastNote = s; noteUntil = S.t + 3; }
 const EXP = [
   'In FLIGHT, raise the collective to 70%. N1 climbs to supply the power while N2 stays near 100%.',
   'Set OAT to 35 °C or more and altitude to 7,000 ft or more. Raise the collective until TOT reaches about 845 °C, then compare shaft power with the 531 kW sea-level rating.',
-  'Shut down: On ground, collective down, lever to OFF. When N1 is below 3%, set the lever to IDLE and engage the starter. Let the engine stabilize at idle.',
+  'Shut down: On ground, collective down, lever to OFF. When N1 is below 3%, set the lever to IDLE, then press and hold the starter. Release it after the 45% N1 cut-out and let the engine stabilize at idle.',
   'From idle, move the lever to FLIGHT and let the governor bring N2 to 100%.',
   'Tick Hot start, shut down, then start again. Cut the fuel (lever OFF) before TOT passes 865 °C.',
   'Airborne, press Flameout now, then lower the collective to 25% or less to keep rotor speed at 90% or more.'
@@ -780,19 +786,22 @@ function phaseText() {
     return ['Cranking', `The starter turns only the gas generator. Ignition and fuel come on at 10% N1. N1 is ${fmt(S.N1)}%.`];
   }
   if (S.comb && S.starting) {
-    if (S.N1 < CUTOUT) return ['Light-off', `Combustion and starter accelerate the gas generator together. Watch the TOT peak: start limit 865 °C. Peak so far ${fmt(S.startPeak)} °C.`];
-    return ['Self-sustaining', 'Starter cut out at 45% N1. The turbine now drives the compressor on its own and accelerates to idle.'];
+    if (S.N1 < CUTOUT && !S.starter && S.N1 >= 25) return ['Slow start', `Starter released before cut-out. The turbine is accelerating the gas generator on its own, but slowly (N1 ${fmt(S.N1)}%). Watch TOT.`];
+    if (S.N1 < CUTOUT && !S.starter) return ['Hung start', `Starter released before cut-out. Below about 25% N1 the turbine cannot accelerate the gas generator on its own (N1 ${fmt(S.N1)}%). Hold the starter, or cut the fuel.`];
+    if (S.N1 < CUTOUT) return ['Light-off', `Combustion and starter accelerate the gas generator together. Keep holding the starter. Watch the TOT peak: start limit 865 °C. Peak so far ${fmt(S.startPeak)} °C.`];
+    return ['Self-sustaining', `Starter cut out at 45% N1. The turbine now drives the compressor on its own and accelerates to idle.${S.startHeld ? ' Release the starter.' : ''}`];
   }
   if (S.comb) {
+    if (S.startHeld) return ['Release starter', `The engine is running and the starter has cut out. Release the starter switch. N1 ${fmt(S.N1, 1)}%.`];
     if (S.lever === 'idle') return ['Ground idle', `The fuel control holds N1 near ${N1_IDLE}%. The free turbine and rotor turn slower than in flight (N2 ${fmt(S.N2)}%).`];
     if (S.N1 > N1_STOP - 0.3 && S.NR < 98) return ['Power-limited', 'N1 is at the fuel stop and cannot give more. The rotor is drooping. Lower the collective.'];
     if (S.TOT > C.TOT_TO) return ['Over-temp', `TOT ${fmt(S.TOT)} °C is above the 845 °C take-off limit. The fuel control does not protect TOT. Lower the collective.`];
     if (!S.coupled) return ['Re-engaging', 'The free turbine is spinning up to meet the rotor. The free wheel engages when the speeds match.'];
     return ['Governing', `The fuel control holds N2 at ${fmt(S.N2, 1)}% and sets N1 to ${fmt(S.N1, 1)}% to supply ${fmt(S.P)} kW.`];
   }
-  if (S.airborne) return ['Flameout', `The free wheel lets the rotor (NR ${fmt(S.NR)}%) overrun the dead engine (N2 ${fmt(S.N2)}%). Lower the collective to hold rotor speed. Engage the starter to relight.`];
+  if (S.airborne) return ['Flameout', `The free wheel lets the rotor (NR ${fmt(S.NR)}%) overrun the dead engine (N2 ${fmt(S.N2)}%). Lower the collective to hold rotor speed. Hold the starter to relight.`];
   if (S.N1 > 3) return ['Spooling down', `No fuel. N1 ${fmt(S.N1)}% and TOT ${fmt(S.TOT)} °C are falling.`];
-  return ['Shut down', S.lever === 'off' ? 'Set the lever to IDLE, then engage the starter.' : 'Engage the starter to begin a start.'];
+  return ['Shut down', S.lever === 'off' ? 'Set the lever to IDLE, then press and hold the starter.' : 'Press and hold the starter to begin a start.'];
 }
 function updateDOM() {
   const [ph, msg] = phaseText();
@@ -828,10 +837,13 @@ function updateDOM() {
   $('#stations tbody').innerHTML = TH.st.map(s => `<tr><td class="mono">${s.k}</td><td>${s.name}</td><td class="n">${s.P.toFixed(2)}</td><td class="n">${fmt(s.T - 273.15)}</td></tr>`).join('');
   // controls
   const btn = $('#btnStart');
-  btn.textContent = S.starter ? 'Release starter' : 'Engage starter';
-  btn.classList.toggle('on', S.starter);
-  btn.disabled = !S.starter && (S.comb || S.N1 >= CUTOUT);
-  $('#startHint').textContent = S.comb ? 'Engine running. Shut down (lever OFF) before starting again.'
+  btn.textContent = !S.startHeld ? 'Hold to start' : S.starter ? 'Starter engaged' : 'Starter cut out · release';
+  btn.classList.toggle('on', S.startHeld);
+  btn.setAttribute('aria-pressed', String(S.startHeld));
+  btn.disabled = !S.startHeld && !canStart();
+  $('#startHint').textContent = S.startHeld ? (S.starter ? 'Hold until the starter cuts out at 45% N1.' : 'Cut out at 45% N1. Release the switch.')
+    : S.comb && S.starting && S.N1 < CUTOUT ? 'Released before cut-out. Hold it again to finish the start.'
+    : S.comb ? 'Engine running. Shut down (lever OFF) before starting again.'
     : S.N1 >= CUTOUT ? 'Wait for N1 to fall below 45%.'
     : S.lever === 'off' ? 'Lever is OFF: the starter will dry-crank with no fuel.'
     : S.hot ? 'Hot start armed. Be ready to pull the lever to OFF.' : 'Ignition and fuel come on automatically at 10% N1.';
@@ -862,10 +874,30 @@ $('#alt').addEventListener('input', e => { S.alt = +e.target.value; $('#altOut')
 $('#fHot').addEventListener('change', e => { S.hot = e.target.checked; });
 $('#fFoul').addEventListener('change', e => { S.foul = e.target.checked; });
 $('#fBleed').addEventListener('change', e => { S.bleed = e.target.checked; });
-$('#btnStart').addEventListener('click', () => {
-  if (S.starter) { S.starter = false; note('Starter released'); return; }
-  if (!S.comb && S.N1 < CUTOUT) { S.starter = true; }
+// Momentary starter switch: pointer or Space/Enter held down engages it; releasing lets it go.
+const btnStart = $('#btnStart');
+// Available when shut down below cut-out speed, or to re-engage during a start that has not reached cut-out.
+const canStart = () => S.N1 < CUTOUT && (!S.comb || S.starting);
+function pressStarter() {
+  if (S.startHeld || !canStart()) return;
+  S.startHeld = true; S.cutout = false; updateDOM();
+}
+function releaseStarter() {
+  if (!S.startHeld) return;
+  S.startHeld = false; S.starter = false; note('Starter released'); updateDOM();
+}
+btnStart.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  e.preventDefault(); btnStart.focus();
+  try { btnStart.setPointerCapture(e.pointerId); } catch (_) {}
+  pressStarter();
 });
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => btnStart.addEventListener(t, releaseStarter));
+btnStart.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); pressStarter(); } });
+btnStart.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); releaseStarter(); } });
+btnStart.addEventListener('blur', releaseStarter);
+btnStart.addEventListener('contextmenu', e => e.preventDefault());
+window.addEventListener('blur', releaseStarter);
 $('#btnFlameout').addEventListener('click', () => {
   if (!S.comb) return;
   S.comb = false; S.starting = false; S.flameoutAt = S.t; note('Flameout');

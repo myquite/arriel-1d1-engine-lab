@@ -100,6 +100,8 @@ header.top { display: grid; gap: 10px; padding-top: 6px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--face); }
 .btn.primary.on { background: var(--caution); border-color: var(--caution); }
+.btn.starter { width: 100%; padding: 12px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
+.btn.starter.on { box-shadow: inset 0 3px 6px rgba(0, 0, 0, .3); transform: translateY(1px); color: #1b1300; }
 .btn.danger { color: var(--warn); }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--face); }
@@ -117,6 +119,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .gauges { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .gauge { display: grid; justify-items: center; gap: 2px; min-width: 0; }
 .gauge canvas { width: 100%; max-width: 172px; aspect-ratio: 1; display: block; }
+.cockpit { display: grid; gap: 10px; padding: 12px; }
+.cockpit .gauges { gap: 6px; }
+.cockpit .gauge canvas { max-width: 150px; }
 .readouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 16px; }
 .ro { display: grid; gap: 0; padding: 6px 0; border-top: 1px solid var(--line); }
 .ro span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-family: var(--font-display); font-weight: 600; }
@@ -189,6 +194,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 80ch; }
 @media (max-width: 920px) {
   .lab { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .stage { display: contents; }
+  .cockpit { order: 0; }
   .canvas-box { order: 1; min-width: 0; }
   .status { order: 2; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; box-shadow: 0 6px 14px -10px rgba(0, 0, 0, .45); }
   .controls { order: 3; }
@@ -206,7 +212,7 @@ footer { color: var(--muted); font-size: 13px; max-width: 80ch; }
   .controls { grid-template-columns: 1fr; }
   .ctl { border-right: 0; }
   .study { grid-template-columns: 1fr; }
-  .gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gauges { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .status { flex-direction: column; gap: 2px; }
 }
