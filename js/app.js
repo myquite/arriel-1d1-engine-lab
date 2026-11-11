@@ -674,6 +674,7 @@ const GAUGES = [
   { cv: $('#gOT'), label: 'Oil temp', unit: '°C', min: -40, max: 140, step: 40, f: 0,
     arcs: [[-40, 0, 'caution'], [0, 115, 'ok'], [115, 140, 'warn']], red: [115], marks: [], val: () => [S.oilT] }
 ];
+const bandOf = (g, v) => { const a = g.arcs.find(([f, t]) => v >= f && v <= t); return a ? a[2] : ''; };
 function drawGauge(g) {
   const { ctx, w, h } = fit(g.cv);
   ctx.clearRect(0, 0, w, h);
@@ -847,6 +848,14 @@ function updateDOM() {
     : S.N1 >= CUTOUT ? 'Wait for N1 to fall below 45%.'
     : S.lever === 'off' ? 'Lever is OFF: the starter will dry-crank with no fuel.'
     : S.hot ? 'Hot start armed. Be ready to pull the lever to OFF.' : 'Ignition and fuel come on automatically at 10% N1.';
+  const b2 = $('#btnStart2');
+  b2.textContent = !S.startHeld ? 'Start' : S.starter ? 'Cranking' : 'Release';
+  b2.classList.toggle('on', S.startHeld);
+  b2.setAttribute('aria-pressed', String(S.startHeld));
+  b2.disabled = btn.disabled;
+  [['#mN1', 0, S.N1, 1], ['#mTOT', 2, S.TOT, 0], ['#mNR', 1, S.NR, 0], ['#mQ', 3, S.q, 1]].forEach(([id, gi, v, d]) => {
+    const el = $(id); el.textContent = fmt(v, d); el.className = bandOf(GAUGES[gi], v);
+  });
   $('#btnFlameout').disabled = !S.comb;
   $('#preqOut').textContent = `${fmt(preq())} kW`;
   const a = amb();
@@ -875,7 +884,6 @@ $('#fHot').addEventListener('change', e => { S.hot = e.target.checked; });
 $('#fFoul').addEventListener('change', e => { S.foul = e.target.checked; });
 $('#fBleed').addEventListener('change', e => { S.bleed = e.target.checked; });
 // Momentary starter switch: pointer or Space/Enter held down engages it; releasing lets it go.
-const btnStart = $('#btnStart');
 // Available when shut down below cut-out speed, or to re-engage during a start that has not reached cut-out.
 const canStart = () => S.N1 < CUTOUT && (!S.comb || S.starting);
 function pressStarter() {
@@ -886,17 +894,21 @@ function releaseStarter() {
   if (!S.startHeld) return;
   S.startHeld = false; S.starter = false; note('Starter released'); updateDOM();
 }
-btnStart.addEventListener('pointerdown', e => {
-  if (e.button !== 0) return;
-  e.preventDefault(); btnStart.focus();
-  try { btnStart.setPointerCapture(e.pointerId); } catch (_) {}
-  pressStarter();
+// Two buttons drive the same switch: the one in the control rack and the one in the phone strip.
+['#btnStart', '#btnStart2'].forEach(sel => {
+  const b = $(sel);
+  b.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault(); b.focus();
+    try { b.setPointerCapture(e.pointerId); } catch (_) {}
+    pressStarter();
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => b.addEventListener(t, releaseStarter));
+  b.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); pressStarter(); } });
+  b.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); releaseStarter(); } });
+  b.addEventListener('blur', releaseStarter);
+  b.addEventListener('contextmenu', e => e.preventDefault());
 });
-['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => btnStart.addEventListener(t, releaseStarter));
-btnStart.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); pressStarter(); } });
-btnStart.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); releaseStarter(); } });
-btnStart.addEventListener('blur', releaseStarter);
-btnStart.addEventListener('contextmenu', e => e.preventDefault());
 window.addEventListener('blur', releaseStarter);
 $('#btnFlameout').addEventListener('click', () => {
   if (!S.comb) return;

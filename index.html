@@ -39,7 +39,16 @@
         <span class="tag">Upper half: section · Lower half: outside view · Schematic, not to scale</span>
         <span class="tag r" id="simclock">t 00:00</span>
       </div>
-      <div class="status"><span class="phase" id="phase">Governing</span><span class="msg" id="msg"></span></div>
+      <div class="status">
+        <div class="mini" role="group" aria-label="Key instruments and starter">
+          <div class="mi"><span>N1 %</span><b id="mN1">–</b></div>
+          <div class="mi"><span>TOT °C</span><b id="mTOT">–</b></div>
+          <div class="mi"><span>NR %</span><b id="mNR">–</b></div>
+          <div class="mi"><span>Torque</span><b id="mQ">–</b></div>
+          <button type="button" class="btn primary starter" id="btnStart2" aria-pressed="false" aria-label="Starter, hold to start">Start</button>
+        </div>
+        <span class="phase" id="phase">Governing</span><span class="msg" id="msg"></span>
+      </div>
       <div class="legend-row">
         <p class="cap">Upper half: section · Lower half: outside view · Swipe the drawing to pan</p>
         <div class="tscale"><span>Gas temperature</span><span>−40 °C</span><span class="bar"></span><span>1,250 °C</span></div>

@@ -76,6 +76,13 @@ header.top { display: grid; gap: 10px; padding-top: 6px; }
 .status { display: flex; gap: 10px; align-items: baseline; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); min-height: 48px; }
 .status .phase { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 14px; color: var(--accent); white-space: nowrap; }
 .status .msg { min-width: 0; }
+/* Sticky key-instrument strip: phones and narrow screens only, where the gauges and starter scroll out of view */
+.mini { display: none; }
+.mi { display: grid; min-width: 0; }
+.mi span { font-family: var(--font-display); font-weight: 600; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.mi b { font-family: var(--font-mono); font-weight: 600; font-size: 16px; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.mi b.ok { color: var(--ok); } .mi b.caution { color: var(--caution); } .mi b.warn { color: var(--warn); }
+.mini .starter { width: auto; min-width: 84px; padding: 8px 10px; align-self: stretch; }
 .legend-row { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; justify-content: space-between; }
 .tscale { display: flex; align-items: center; gap: 8px; white-space: nowrap; min-width: 0; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
 .tscale .bar { flex: 0 1 180px; min-width: 48px; width: 180px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, rgb(64,110,214), rgb(46,160,170) 25%, rgb(214,170,52) 40%, rgb(236,118,40) 62%, rgb(218,58,40) 82%, rgb(176,24,96)); }
@@ -196,6 +203,8 @@ footer { color: var(--muted); font-size: 13px; max-width: 80ch; }
   .stage { display: contents; }
   .cockpit { order: 0; }
   .canvas-box { order: 1; min-width: 0; }
+  .mini { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 8px; align-items: center; width: 100%; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .status { flex-wrap: wrap; }
   .status { order: 2; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; box-shadow: 0 6px 14px -10px rgba(0, 0, 0, .45); }
   .controls { order: 3; }
   .legend-row { order: 4; }
